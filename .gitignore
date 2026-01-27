@@ -73,3 +73,63 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+
+# =========================================================================
+# Additional Custom Ignores
+# =========================================================================
+
+# Ignore SecAssets folder in Assets
+/[Aa]ssets/SecAssets/
+
+# Visual Studio Code (VSC)
+.vscode/
+*.code-workspace
+
+# Additional Visual Studio files
+*.user
+*.userprefs
+*.sln.docstates
+.vs/
+
+# =========================================================================
+# Firebase SDK & Package Manager
+# =========================================================================
+
+# Firebase SDK binary files (Avoid 100MB+ limit)
+/[Aa]ssets/Firebase/Plugins/x86_64/FirebaseCppApp*
+/[Aa]ssets/Firebase/
+
+/[Aa]ssets/Firebase/
+/[Aa]ssets/Firebase.meta
+/[Aa]ssets/Editor\ Default\ Resources/Firebase/
+
+/[Aa]ssets/ExternalDependencyManager/
+/[Aa]ssets/ExternalDependencyManager.meta
+
+/[Aa]ssets/Plugins/x86_64/FirebaseCppApp*
+/[Aa]ssets/Plugins/Android/Firebase/
+/[Aa]ssets/Plugins/iOS/Firebase/
+/[Aa]ssets/Plugins/tvOS/Firebase/
+
+# 파일과 메타 파일을 세트로 이그노어
+/[Aa]ssets/[Ss]treaming[Aa]ssets/google-services-desktop.json
+/[Aa]ssets/[Ss]treaming[Aa]ssets/google-services-desktop.json.meta
+
+/[Aa]ssets/[Ss]treaming[Aa]ssets/google-services.json
+/[Aa]ssets/[Ss]treaming[Aa]ssets/google-services.json.meta
+
+/[Aa]ssets/[Ss]treaming[Aa]ssets/Firebase/
+/[Aa]ssets/[Ss]treaming[Aa]ssets/Firebase.meta
+
+# =========================================================================
+# Firebase Configuration Files (Optional but recommended for Public Repos)
+# =========================================================================
+# 안드로이드용 설정 파일
+/[Aa]ssets/google-services.json
+/[Aa]ssets/google-services.json.meta
+
+# iOS용 설정 
+
+/[Aa]ssets/GoogleService-Info.plist
+/[Aa]ssets/GoogleService-Info.plist.meta
