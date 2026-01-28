@@ -12,7 +12,7 @@ public class RoomListView : MonoBehaviour
 
     private readonly List<RoomUnitView> _items = new();
 
-    private void Awake()
+    void Awake()
     {
         AutoWireIfNeeded();
     }

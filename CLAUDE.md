@@ -21,32 +21,30 @@ Opening the project:
 
 ### Scene Flow
 ```
-Title → (Login/SignUp) → Lobby → Stage
+Title → (Login/SignUp) → Lobby → Loading → Stage
 ```
 The game has 4 scenes in `Assets/_Scenes/`:
 - **Title** - Entry point, authentication (Firebase Auth), Photon lobby connection
-- **Loading** - Transition/loading screen
-- **Lobby** - Pre-game lobby (after Photon lobby join)
+- **Lobby** - Room list, room creation/joining, quick start
+- **Loading** - Transition screen (TODO: implement Stage transition)
 - **Stage** - Main gameplay scene
 
 ### Script Organization
 Scripts are in `Assets/_Scripts/` organized by scene/system:
-```
-_Scripts/
-├── S_Title/
-│   └── TitleManager.cs      # UI flow, login/signup, scene transition
-├── S_Loading/
-├── S_Lobby/
-├── System/
-│   ├── Singleton.cs         # Generic singleton base class
-│   └── NetworkManager.cs    # Photon Fusion networking
-└── Firebase/
-    ├── AuthManager.cs       # Firebase Auth (singleton)
-    └── FirestoreManager.cs  # Firestore DB (singleton)
-```
+- `S_Title/` - Title scene (TitleManager)
+- `S_Lobby/` - Lobby scene (LobbyManager, RoomListView, CreateRoomPanelView, JoinPwPanelView, RoomUnitView, RoomListItemData)
+- `S_Loading/` - Loading scene (LoadingManager - stub)
+- `System/` - Cross-scene singletons (Singleton, NetworkManager)
+- `Firebase/` - Firebase services (AuthManager, FirestoreManager)
+
+### Manager/View Pattern
+Scene UIs follow a Manager/View separation:
+- **Manager** (e.g., `LobbyManager`) - Business logic, coordinates views, handles events
+- **View** (e.g., `RoomListView`, `CreateRoomPanelView`) - UI rendering, receives callbacks from Manager
+- Views call `SetLobbyManager(this)` or receive callbacks to communicate back
 
 ### Singleton Pattern
-All managers inherit from `Singleton<T>` (`Assets/_Scripts/System/Singleton.cs`):
+All system managers inherit from `Singleton<T>` (`Assets/_Scripts/System/Singleton.cs`):
 - `DontDestroyOnLoad` enabled by default
 - Access via `ManagerClass.Instance`
 - Override `OnSingletonAwake()` for initialization
@@ -59,6 +57,8 @@ All managers inherit from `Singleton<T>` (`Assets/_Scripts/System/Singleton.cs`)
 - `WaitForInitialization()` - await before using auth methods
 - `SignInAsync(email, password)` - returns FirebaseUser
 - `SignUpAsync(email, password)` - returns FirebaseUser
+- `SignOut()` - signs out and clears user data
+- `SetUserData(uid, email, nickname)` - stores current user info
 - Stores current user data: `CurrentUserUid`, `CurrentUserEmail`, `CurrentUserNickname`
 
 **FirestoreManager** (`Assets/_Scripts/Firebase/FirestoreManager.cs`):
@@ -77,11 +77,28 @@ users/{uid}
 **NetworkManager** (`Assets/_Scripts/System/NetworkManager.cs`):
 - Implements `INetworkRunnerCallbacks`
 - `JoinLobby(nickname)` - connects to Photon session lobby
-- `JoinOrCreateRoom(roomName, sceneName)` - joins/creates a room
+- `JoinOrCreateRoom(roomName, sceneName)` - joins/creates a room (simple overload)
+- `JoinOrCreateRoom(roomName, sceneName, sessionProperties, maxPlayers, isVisible, isOpen)` - full overload with custom session properties
+- `Disconnect()` - shuts down runner and clears state
 - `PlayerNickname` - stores the player's nickname for Photon
+- `LastSessionList` - cached list of available sessions
+- `SessionListUpdated` event - fires when session list changes (subscribe in OnEnable, unsubscribe in OnDisable)
 - Requires `NetworkRunner` prefab assigned in Inspector
 
-Photon Fusion SDK location: `Assets/Photon/Fusion/`
+Session properties used:
+- `pw` - room password (empty string = no password)
+- `host` - host player's nickname
+
+### Lobby System
+**LobbyManager** (`Assets/_Scripts/S_Lobby/LobbyManager.cs`):
+- Manages room list display, room creation, and joining
+- Public methods for UI buttons: `OnClickLeaveToTitle()`, `OnClickOpenCreateRoom()`, `OnClickQuickStart()`, `OnClickRefresh()`
+- `RequestCreateRoom(roomName, password)` - creates room with optional password
+- `SubmitJoinPassword(password)` - validates password for protected rooms
+
+**RoomListView** - Renders list of rooms using `RoomUnitView` prefabs
+**RoomListItemData** - Data class wrapping `SessionInfo` with host name and password
+**CreateRoomPanelView** / **JoinPwPanelView** - Modal panels for room creation and password entry
 
 ### Title Scene Flow
 **TitleManager** (`Assets/_Scripts/S_Title/TitleManager.cs`):
@@ -122,9 +139,10 @@ Uses Unity's new Input System. Input actions in `Assets/InputSystem_Actions.inpu
 
 ### Naming
 - Folders prefixed with underscore (`_Scripts`, `_Scenes`, `_Prefabs`) appear first in Unity
-- Scene-specific script folders use `S_` prefix (e.g., `S_Title`)
+- Scene-specific script folders use `S_` prefix (e.g., `S_Title`, `S_Lobby`)
 - Class names: PascalCase (e.g., `TitleManager`, `AuthManager`)
 - Private fields: `_camelCase` with underscore prefix
+- Session property keys: lowercase short strings (e.g., `pw`, `host`)
 
 ### Async Patterns
 - Firebase operations use `async/await`
@@ -132,16 +150,16 @@ Uses Unity's new Input System. Input actions in `Assets/InputSystem_Actions.inpu
 - Always check `IsInitialized` before calling manager methods
 
 ### MonoBehaviour Pattern
-- Scene managers handle per-scene logic (e.g., `TitleManager`)
+- Scene managers handle per-scene logic (e.g., `TitleManager`, `LobbyManager`)
 - System managers are singletons that persist across scenes
 - Use `[SerializeField]` for Inspector references
+- Views use `AutoWireIfNeeded()` pattern for fallback reference finding
 
-## Lobby 작업 (2026-01-27)
-- Lobby 매니저/뷰 스크립트 추가 및 로비 기능 구현: 방 목록 갱신, 조인, 퀵조인, 방 만들기, 비밀번호 조인, 안내 문구 처리.
-- 로비 UI 버튼 이벤트와 참조를 LobbyManager로 연결 (Lobby 씬 YAML에 직접 연결).
-- RoomUnit Panel 기반으로 방 리스트 렌더링, 패스워드/호스트 정보 세션 프로퍼티 사용 (키: pw, host).
-- NetworkManager에 세션 리스트 이벤트/캐시 및 커스텀 프로퍼티 포함 JoinOrCreateRoom 확장.
-- AuthManager에 SignOut 추가 (로비 EXIT 시 연결 해제 및 데이터 정리).
+### UI Event Wiring
+- UI button events are wired in scene YAML to Manager public methods (e.g., `OnClickRefresh`)
+- Views receive callbacks via constructor/setter methods
+
+## Current Development Status
 
 ### TODO
-- Loading 씬 이후 Stage 씬 전환 로직 구체화 (현재는 Loading 씬 진입까지만 처리).
+- Loading scene: Implement transition logic to Stage scene (currently stub only)

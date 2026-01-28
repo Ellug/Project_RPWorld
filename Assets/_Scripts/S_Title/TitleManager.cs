@@ -34,7 +34,7 @@ public class TitleManager : MonoBehaviour
     private bool _waitingForInput = true;
     private Coroutine _blinkCoroutine;
 
-    private void Start()
+    void Start()
     {
         _signInPanel.SetActive(false);
         _signUpPanel.SetActive(false);
@@ -48,7 +48,7 @@ public class TitleManager : MonoBehaviour
         _blinkCoroutine = StartCoroutine(BlinkPressStart());
     }
 
-    private void Update()
+    void Update()
     {
         if (_waitingForInput)
         {
@@ -66,7 +66,6 @@ public class TitleManager : MonoBehaviour
         else
         {
             HandleTabNavigation();
-            HandleEnterKey();
         }
     }
 
@@ -96,6 +95,15 @@ public class TitleManager : MonoBehaviour
         _goToSignUpButton.onClick.AddListener(ShowSignUpPanel);
         _signUpButton.onClick.AddListener(OnSignUpClicked);
         _cancelButton.onClick.AddListener(ShowSignInPanel);
+
+        // IME 조합 완료 후 Enter 처리를 위해 onSubmit 사용
+        _signInEmailInput.onSubmit.AddListener(_ => OnSignInClicked());
+        _signInPasswordInput.onSubmit.AddListener(_ => OnSignInClicked());
+
+        _signUpEmailInput.onSubmit.AddListener(_ => OnSignUpClicked());
+        _signUpPasswordInput.onSubmit.AddListener(_ => OnSignUpClicked());
+        _signUpPasswordConfirmInput.onSubmit.AddListener(_ => OnSignUpClicked());
+        _signUpNicknameInput.onSubmit.AddListener(_ => OnSignUpClicked());
     }
 
     private void SetupTabNavigation()
@@ -145,22 +153,6 @@ public class TitleManager : MonoBehaviour
         }
     }
 
-    private void HandleEnterKey()
-    {
-        if (Keyboard.current == null) return;
-
-        if (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.numpadEnterKey.wasPressedThisFrame)
-        {
-            if (_signInPanel.activeSelf)
-            {
-                OnSignInClicked();
-            }
-            else if (_signUpPanel.activeSelf)
-            {
-                OnSignUpClicked();
-            }
-        }
-    }
 
     private void ShowSignInPanel()
     {

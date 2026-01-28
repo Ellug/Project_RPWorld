@@ -7,7 +7,7 @@ public class JoinPwPanelView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _wrongText;
     [SerializeField] private LobbyManager _lobbyManager;
 
-    private void Awake()
+    void Awake()
     {
         AutoWireIfNeeded();
         HideError();

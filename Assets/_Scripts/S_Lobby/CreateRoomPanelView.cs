@@ -7,7 +7,7 @@ public class CreateRoomPanelView : MonoBehaviour
     [SerializeField] private TMP_InputField _passwordInput;
     [SerializeField] private LobbyManager _lobbyManager;
 
-    private void Awake()
+    void Awake()
     {
         AutoWireIfNeeded();
     }
