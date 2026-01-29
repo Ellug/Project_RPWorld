@@ -364,6 +364,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LoadingManager
   _stageScenePath: Assets/_Scenes/Stage.unity
   _minimumDisplayTime: 0.5
+  _progressSlider: {fileID: 2129807959}
+  _smoothProgress: 1
+  _smoothSpeed: 3
+  _syncCheckInterval: 0.1
 --- !u!4 &585566782
 Transform:
   m_ObjectHideFlags: 0

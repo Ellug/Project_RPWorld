@@ -26,7 +26,7 @@ Title → (Login/SignUp) → Lobby → Loading → Stage
 The game has 4 scenes in `Assets/_Scenes/`:
 - **Title** - Entry point, authentication (Firebase Auth), Photon lobby connection
 - **Lobby** - Room list, room creation/joining, quick start
-- **Loading** - Transition screen between Lobby and Stage
+- **Loading** - Transition screen with async scene preloading and Fusion sync
 - **Stage** - Main gameplay scene (RTS 탑다운 타일 배치)
 
 ### Script Organization
@@ -161,6 +161,19 @@ Features:
 **StageManager** (`Assets/_Scripts/S_Stage/StageManager.cs`):
 - Host-only map rotation via PageUp/PageDown keys
 - Can switch maps through Loading scene or directly via `WorldMapState`
+
+### Loading System
+**LoadingManager** (`Assets/_Scripts/S_Loading/LoadingManager.cs`):
+- `NetworkBehaviour` for Fusion-synchronized scene transitions
+- Async scene preloading with `SceneManager.LoadSceneAsync` (allowSceneActivation = false)
+- Progress tracking (0-0.9 = scene load, 0.9-1.0 = sync/activation)
+- Networked properties for host-client sync:
+  - `HostReady` - indicates host finished loading
+  - `HostProgress` - host's loading progress for client UI
+- Inspector-assignable `Slider` for loading bar UI
+- Smooth progress animation option (`_smoothProgress`, `_smoothSpeed`)
+- `Progress` property and `OnProgressChanged` event for custom UI binding
+- Host triggers `NetworkRunner.LoadScene()` after all clients synced
 
 ## Input System
 Uses Unity's new Input System. Input actions in `Assets/InputSystem_Actions.inputactions`:
