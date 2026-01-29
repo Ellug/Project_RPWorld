@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 510082559f340c64ca84259e3d18ffcb, type: 3}
+  m_Name: DefaultTilePalette
+  m_EditorClassIdentifier: Assembly-CSharp::TilePalette
+  _materials:
+  - {fileID: 2100000, guid: bc186af314c341c4aba9972f5b703be6, type: 2}
+  - {fileID: 2100000, guid: 13eb0b127c0c8c946ba4d83aa6772bd3, type: 2}
+  - {fileID: 2100000, guid: 69687d1d30a4013489e7cd489992a515, type: 2}
+  - {fileID: 2100000, guid: 03269190e2a434b49ab7158bb72424cc, type: 2}

@@ -25,13 +25,8 @@ public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
     {
         _playerNickname = nickname;
 
-        if (_runner == null)
-        {
-            _runner = Instantiate(_runnerPrefab);
-            _runner.name = "NetworkRunner";
-            _runner.AddCallbacks(this);
-            DontDestroyOnLoad(_runner.gameObject);
-        }
+        if (!EnsureRunner())
+            return false;
 
         var result = await _runner.JoinSessionLobby(SessionLobby.ClientServer);
 
@@ -60,11 +55,8 @@ public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
         bool? isVisible,
         bool? isOpen)
     {
-        if (_runner == null || !_runner.IsRunning)
-        {
-            Debug.LogError("NetworkRunner is not running. Call JoinLobby first.");
+        if (!EnsureRunner())
             return false;
-        }
 
         var sceneInfo = new NetworkSceneInfo();
         var sceneIndex = SceneUtility.GetBuildIndexByScenePath(sceneName);
@@ -103,6 +95,24 @@ public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
             Debug.LogError($"Failed to join/create room: {result.ShutdownReason}");
             return false;
         }
+    }
+
+    private bool EnsureRunner()
+    {
+        if (_runner != null)
+            return true;
+
+        if (_runnerPrefab == null)
+        {
+            Debug.LogError("NetworkRunner prefab is not assigned.");
+            return false;
+        }
+
+        _runner = Instantiate(_runnerPrefab);
+        _runner.name = "NetworkRunner";
+        _runner.AddCallbacks(this);
+        DontDestroyOnLoad(_runner.gameObject);
+        return true;
     }
 
     public void Disconnect()

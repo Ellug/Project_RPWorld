@@ -8,6 +8,7 @@ public class LobbyManager : MonoBehaviour
 {
     private const string SessionPasswordKey = "pw";
     private const string SessionHostKey = "host";
+    private const string SessionMapKey = "map";
 
     [SerializeField] private RoomListView _roomListView;
     [SerializeField] private CreateRoomPanelView _createRoomPanel;
@@ -16,6 +17,9 @@ public class LobbyManager : MonoBehaviour
     [SerializeField] private float _noticeDuration = 2f;
     [SerializeField] private string _loadingScenePath = "Assets/_Scenes/Loading.unity";
     [SerializeField] private string _titleSceneName = "Title";
+
+    [Header("Map")]
+    [SerializeField] private string _defaultMapName = "default";
 
     private readonly List<RoomListItemData> _rooms = new();
     private RoomListItemData _pendingJoinRoom;
@@ -95,8 +99,7 @@ public class LobbyManager : MonoBehaviour
             return;
         }
 
-        var roomName = $"Room_{Random.Range(1000, 9999)}";
-        RequestCreateRoom(roomName, string.Empty);
+        ShowNotice("참여 가능한 방이 없습니다.");
     }
 
     public void OnClickRefresh()
@@ -266,7 +269,7 @@ public class LobbyManager : MonoBehaviour
         if (string.IsNullOrEmpty(hostName))
             hostName = NetworkManager.Instance?.PlayerNickname;
 
-        if (!string.IsNullOrEmpty(password) || !string.IsNullOrEmpty(hostName))
+        if (!string.IsNullOrEmpty(password) || !string.IsNullOrEmpty(hostName) || !string.IsNullOrEmpty(_defaultMapName))
         {
             properties = new Dictionary<string, SessionProperty>();
 
@@ -275,6 +278,9 @@ public class LobbyManager : MonoBehaviour
 
             if (!string.IsNullOrEmpty(hostName))
                 properties[SessionHostKey] = hostName;
+
+            if (!string.IsNullOrEmpty(_defaultMapName))
+                properties[SessionMapKey] = _defaultMapName;
         }
 
         var ok = await NetworkManager.Instance.JoinOrCreateRoom(

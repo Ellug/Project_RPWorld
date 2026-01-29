@@ -26,16 +26,22 @@ Title → (Login/SignUp) → Lobby → Loading → Stage
 The game has 4 scenes in `Assets/_Scenes/`:
 - **Title** - Entry point, authentication (Firebase Auth), Photon lobby connection
 - **Lobby** - Room list, room creation/joining, quick start
-- **Loading** - Transition screen (TODO: implement Stage transition)
-- **Stage** - Main gameplay scene
+- **Loading** - Transition screen between Lobby and Stage
+- **Stage** - Main gameplay scene (RTS 탑다운 타일 배치)
 
 ### Script Organization
-Scripts are in `Assets/_Scripts/` organized by scene/system:
-- `S_Title/` - Title scene (TitleManager)
-- `S_Lobby/` - Lobby scene (LobbyManager, RoomListView, CreateRoomPanelView, JoinPwPanelView, RoomUnitView, RoomListItemData)
-- `S_Loading/` - Loading scene (LoadingManager - stub)
-- `System/` - Cross-scene singletons (Singleton, NetworkManager)
-- `Firebase/` - Firebase services (AuthManager, FirestoreManager)
+Scripts are in `Assets/_Scripts/` organized by system:
+```
+_Scripts/
+├── System/       # Cross-scene singletons (Singleton, NetworkManager, GameManager)
+├── Firebase/     # Firebase services (AuthManager, FirestoreManager)
+├── Camera/       # Camera systems (RTSCameraController)
+├── Map/          # Map and tile system (WorldMapState, WorldTile, TilePalette, TilePlacementController)
+├── S_Title/      # Title scene only (TitleManager)
+├── S_Lobby/      # Lobby scene only (LobbyManager, Views)
+├── S_Loading/    # Loading scene only (LoadingManager)
+└── S_Stage/      # Stage scene only (StageManager)
+```
 
 ### Manager/View Pattern
 Scene UIs follow a Manager/View separation:
@@ -88,6 +94,7 @@ users/{uid}
 Session properties used:
 - `pw` - room password (empty string = no password)
 - `host` - host player's nickname
+- `map` - current map name (used by WorldMapState)
 
 ### Lobby System
 **LobbyManager** (`Assets/_Scripts/S_Lobby/LobbyManager.cs`):
@@ -112,6 +119,48 @@ Features:
 - Tab key navigation between input fields
 - Enter key submits current form
 - Async Firebase initialization waiting
+
+### Camera System
+**RTSCameraController** (`Assets/_Scripts/Camera/RTSCameraController.cs`):
+- RTS 스타일 탑다운 카메라
+- WASD/화살표: 이동, Shift: 빠른 이동
+- Ctrl + 마우스휠: 줌 인/아웃
+- 중클릭 드래그: 패닝
+- 화면 가장자리 스크롤 (옵션)
+
+### Tile System
+**TilePalette** (`Assets/_Scripts/Map/TilePalette.cs`):
+- ScriptableObject mapping tile IDs to Materials
+- Create via: Assets > Create > RPWorld > Tile Palette
+
+**WorldTile** (`Assets/_Scripts/Map/WorldTile.cs`):
+- `NetworkBehaviour` for individual tiles
+- Networked `TileId` with change detection for visual updates
+- Auto-wires palette from WorldMapState
+
+**TilePlacementController** (`Assets/_Scripts/Map/TilePlacementController.cs`):
+- 좌클릭: 타일 배치
+- 우클릭: 타일 삭제
+- Q/E 또는 마우스휠: 타일 종류 선택
+- 커서 위치에 프리뷰 표시
+
+### Map System
+**GameManager** (`Assets/_Scripts/System/GameManager.cs`):
+- Singleton that persists across scenes
+- Stores pending map name for cross-scene map switching
+- `SetPendingMapName(mapName)` / `ConsumePendingMapName()` - one-time map name passing
+
+**WorldMapState** (`Assets/_Scripts/Map/WorldMapState.cs`):
+- `NetworkBehaviour` that manages the tile-based world
+- Networked `MapName` property synced across clients
+- `RequestPlaceTile(worldPosition, tileId)` - RPC-based tile placement
+- `RequestRemoveTile(worldPosition)` - RPC-based tile removal
+- `RequestChangeMap(mapName)` - RPC-based map switching
+- Auto-saves map to `Application.persistentDataPath/Maps/{mapName}.json`
+
+**StageManager** (`Assets/_Scripts/S_Stage/StageManager.cs`):
+- Host-only map rotation via PageUp/PageDown keys
+- Can switch maps through Loading scene or directly via `WorldMapState`
 
 ## Input System
 Uses Unity's new Input System. Input actions in `Assets/InputSystem_Actions.inputactions`:
@@ -140,6 +189,7 @@ Uses Unity's new Input System. Input actions in `Assets/InputSystem_Actions.inpu
 ### Naming
 - Folders prefixed with underscore (`_Scripts`, `_Scenes`, `_Prefabs`) appear first in Unity
 - Scene-specific script folders use `S_` prefix (e.g., `S_Title`, `S_Lobby`)
+- System folders without prefix (e.g., `Camera`, `Tile`, `Map`)
 - Class names: PascalCase (e.g., `TitleManager`, `AuthManager`)
 - Private fields: `_camelCase` with underscore prefix
 - Session property keys: lowercase short strings (e.g., `pw`, `host`)
@@ -159,7 +209,15 @@ Uses Unity's new Input System. Input actions in `Assets/InputSystem_Actions.inpu
 - UI button events are wired in scene YAML to Manager public methods (e.g., `OnClickRefresh`)
 - Views receive callbacks via constructor/setter methods
 
-## Current Development Status
+## Data Storage
 
-### TODO
-- Loading scene: Implement transition logic to Stage scene (currently stub only)
+### Map Save Files
+Maps are saved as JSON to `Application.persistentDataPath/Maps/{mapName}.json`:
+```json
+{
+  "MapName": "default",
+  "Tiles": [
+    { "TileId": 0, "Position": { "x": 0, "y": 0, "z": 0 } }
+  ]
+}
+```
