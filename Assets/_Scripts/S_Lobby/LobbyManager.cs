@@ -4,8 +4,12 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// 로비 씬 관리자. 룸 목록 표시, 룸 생성/참가, 퀵스타트 처리.
+/// </summary>
 public class LobbyManager : MonoBehaviour
 {
+    // Fusion 세션 프로퍼티 키
     private const string SessionPasswordKey = "pw";
     private const string SessionHostKey = "host";
     private const string SessionMapKey = "map";
@@ -22,7 +26,7 @@ public class LobbyManager : MonoBehaviour
     [SerializeField] private string _defaultMapName = "default";
 
     private readonly List<RoomListItemData> _rooms = new();
-    private RoomListItemData _pendingJoinRoom;
+    private RoomListItemData _pendingJoinRoom; // 비밀번호 입력 대기 중인 룸
     private bool _isBusy;
     private Coroutine _noticeRoutine;
 
@@ -35,6 +39,7 @@ public class LobbyManager : MonoBehaviour
 
     private void OnEnable()
     {
+        // 세션 목록 갱신 이벤트 구독
         if (NetworkManager.Instance != null)
             NetworkManager.Instance.SessionListUpdated += HandleSessionListUpdated;
     }
@@ -48,6 +53,7 @@ public class LobbyManager : MonoBehaviour
         _createRoomPanel?.Hide();
         _joinPwPanel?.Hide();
 
+        // Title에서 연결 안 됐으면 여기서 재연결 시도
         if (NetworkManager.Instance != null && !NetworkManager.Instance.IsConnected)
         {
             try
@@ -63,6 +69,7 @@ public class LobbyManager : MonoBehaviour
             }
         }
 
+        // 캐시된 세션 목록으로 UI 초기화
         var cachedList = NetworkManager.Instance != null ? NetworkManager.Instance.LastSessionList : null;
         HandleSessionListUpdated(cachedList ?? new List<SessionInfo>());
     }
@@ -72,6 +79,8 @@ public class LobbyManager : MonoBehaviour
         if (NetworkManager.Instance != null)
             NetworkManager.Instance.SessionListUpdated -= HandleSessionListUpdated;
     }
+
+    #region UI Button Callbacks (씬에서 연결)
 
     public void OnClickLeaveToTitle()
     {
@@ -87,6 +96,9 @@ public class LobbyManager : MonoBehaviour
         _joinPwPanel?.Hide();
     }
 
+    /// <summary>
+    /// 퀵스타트: 비밀번호 없고 입장 가능한 첫 번째 룸에 자동 참가.
+    /// </summary>
     public void OnClickQuickStart()
     {
         if (_isBusy)
@@ -119,6 +131,13 @@ public class LobbyManager : MonoBehaviour
         ShowNotice("방 목록을 갱신했습니다.");
     }
 
+    #endregion
+
+    #region Room Creation/Join
+
+    /// <summary>
+    /// 룸 생성 요청. CreateRoomPanelView에서 호출.
+    /// </summary>
     public void RequestCreateRoom(string roomName, string password)
     {
         if (_isBusy)
@@ -138,6 +157,9 @@ public class LobbyManager : MonoBehaviour
         _createRoomPanel?.Hide();
     }
 
+    /// <summary>
+    /// 비밀번호 입력 완료. JoinPwPanelView에서 호출.
+    /// </summary>
     public void SubmitJoinPassword(string password)
     {
         if (_pendingJoinRoom == null)
@@ -162,6 +184,11 @@ public class LobbyManager : MonoBehaviour
         _joinPwPanel?.Hide();
     }
 
+    #endregion
+
+    /// <summary>
+    /// Fusion 세션 목록 갱신 시 호출. 룸 리스트 UI 업데이트.
+    /// </summary>
     private void HandleSessionListUpdated(IReadOnlyList<SessionInfo> sessionList)
     {
         _rooms.Clear();
@@ -173,6 +200,7 @@ public class LobbyManager : MonoBehaviour
                 if (!session.IsVisible)
                     continue;
 
+                // 세션 프로퍼티에서 비밀번호, 호스트명 추출
                 var password = GetSessionString(session, SessionPasswordKey);
                 var hostName = GetSessionString(session, SessionHostKey);
                 _rooms.Add(new RoomListItemData(session, hostName, password));
@@ -187,12 +215,14 @@ public class LobbyManager : MonoBehaviour
         if (_isBusy || data == null)
             return;
 
+        // 입장 가능 여부 확인
         if (!data.SessionInfo.IsOpen || (data.SessionInfo.MaxPlayers > 0 && data.SessionInfo.PlayerCount >= data.SessionInfo.MaxPlayers))
         {
             ShowNotice("입장할 수 없는 방입니다.");
             return;
         }
 
+        // 비밀번호 있으면 입력 패널 표시
         if (data.HasPassword)
         {
             _pendingJoinRoom = data;
@@ -203,6 +233,9 @@ public class LobbyManager : MonoBehaviour
         TryJoinRoom(data);
     }
 
+    /// <summary>
+    /// 퀵스타트용 룸 검색. 비밀번호 없고 열려있고 자리 있는 첫 룸.
+    /// </summary>
     private RoomListItemData FindQuickJoinRoom()
     {
         foreach (var room in _rooms)
@@ -225,6 +258,9 @@ public class LobbyManager : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// 룸 참가 시도. Fusion JoinOrCreateRoom 호출.
+    /// </summary>
     private async void TryJoinRoom(RoomListItemData data)
     {
         if (_isBusy || data == null)
@@ -249,6 +285,9 @@ public class LobbyManager : MonoBehaviour
         _isBusy = false;
     }
 
+    /// <summary>
+    /// 룸 생성. 세션 프로퍼티에 비밀번호, 호스트, 맵 정보 포함.
+    /// </summary>
     private async void CreateRoomAsync(string roomName, string password)
     {
         if (_isBusy)
@@ -269,6 +308,7 @@ public class LobbyManager : MonoBehaviour
         if (string.IsNullOrEmpty(hostName))
             hostName = NetworkManager.Instance?.PlayerNickname;
 
+        // 세션 프로퍼티 설정 (Fusion에서 룸 목록 조회 시 사용)
         if (!string.IsNullOrEmpty(password) || !string.IsNullOrEmpty(hostName) || !string.IsNullOrEmpty(_defaultMapName))
         {
             properties = new Dictionary<string, SessionProperty>();
@@ -297,6 +337,9 @@ public class LobbyManager : MonoBehaviour
         _isBusy = false;
     }
 
+    /// <summary>
+    /// 세션 프로퍼티에서 문자열 값 추출.
+    /// </summary>
     private string GetSessionString(SessionInfo sessionInfo, string key)
     {
         if (sessionInfo.Properties == null)
@@ -305,6 +348,9 @@ public class LobbyManager : MonoBehaviour
         return sessionInfo.Properties.TryGetValue(key, out var value) ? (string)value : null;
     }
 
+    /// <summary>
+    /// 타이틀로 돌아가기. 네트워크 연결 해제 및 로그아웃.
+    /// </summary>
     private void LeaveToTitle()
     {
         _pendingJoinRoom = null;
@@ -347,6 +393,9 @@ public class LobbyManager : MonoBehaviour
         _noticeRoutine = null;
     }
 
+    /// <summary>
+    /// Inspector 미할당 시 자동 탐색.
+    /// </summary>
     private void AutoWireIfNeeded()
     {
         if (_roomListView == null)

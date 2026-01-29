@@ -5,6 +5,10 @@ using System.IO;
 using Fusion;
 using UnityEngine;
 
+/// <summary>
+/// 타일 기반 월드 맵 상태 관리. Fusion NetworkBehaviour로 네트워크 동기화.
+/// 타일 배치/삭제, 맵 저장/로드, 맵 전환 기능 제공.
+/// </summary>
 public class WorldMapState : NetworkBehaviour
 {
     private const string SessionMapKey = "map";
@@ -23,6 +27,7 @@ public class WorldMapState : NetworkBehaviour
     [SerializeField] private bool _saveOnApplicationQuit = true;
     [SerializeField] private bool _logDebug = false;
 
+    // [Networked]: Fusion이 네트워크 전체에 동기화하는 프로퍼티
     [Networked]
     public NetworkString<_64> MapName { get; private set; }
 
@@ -36,6 +41,7 @@ public class WorldMapState : NetworkBehaviour
 
     public override void Spawned()
     {
+        // HasStateAuthority: Shared Mode에서 이 오브젝트의 상태를 수정할 권한이 있는지
         if (!HasStateAuthority)
             return;
 
@@ -55,6 +61,11 @@ public class WorldMapState : NetworkBehaviour
             SaveCurrentMap();
     }
 
+    #region Public API (클라이언트에서 호출 가능)
+
+    /// <summary>
+    /// 타일 배치 요청. StateAuthority 없으면 RPC로 호스트에 요청.
+    /// </summary>
     public void RequestPlaceTile(Vector3 worldPosition, int tileId)
     {
         if (HasStateAuthority)
@@ -63,6 +74,9 @@ public class WorldMapState : NetworkBehaviour
             RPC_RequestPlaceTile(worldPosition, tileId);
     }
 
+    /// <summary>
+    /// 맵 변경 요청. 기존 타일 제거 후 새 맵 로드.
+    /// </summary>
     public void RequestChangeMap(string mapName)
     {
         if (string.IsNullOrWhiteSpace(mapName))
@@ -74,6 +88,9 @@ public class WorldMapState : NetworkBehaviour
             RPC_RequestChangeMap(mapName);
     }
 
+    /// <summary>
+    /// 타일 제거 요청.
+    /// </summary>
     public void RequestRemoveTile(Vector3 worldPosition)
     {
         if (HasStateAuthority)
@@ -89,6 +106,12 @@ public class WorldMapState : NetworkBehaviour
         return _tileLookup.TryGetValue(key, out var tile) && tile != null;
     }
 
+    #endregion
+
+    #region Fusion RPCs
+
+    // RpcSources.All: 모든 클라이언트에서 호출 가능
+    // RpcTargets.StateAuthority: StateAuthority를 가진 클라이언트에서만 실행
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     private void RPC_RequestPlaceTile(Vector3 worldPosition, int tileId, RpcInfo info = default)
     {
@@ -107,6 +130,10 @@ public class WorldMapState : NetworkBehaviour
         SetMapName(mapName);
     }
 
+    #endregion
+
+    #region Internal Tile Operations
+
     private void RemoveTileInternal(Vector3 worldPosition)
     {
         if (Runner == null)
@@ -120,6 +147,7 @@ public class WorldMapState : NetworkBehaviour
 
         _tileLookup.Remove(key);
 
+        // Fusion 네트워크 오브젝트면 Despawn, 아니면 Destroy
         if (tile.Object != null && tile.HasStateAuthority)
             Runner.Despawn(tile.Object);
         else
@@ -134,12 +162,14 @@ public class WorldMapState : NetworkBehaviour
         var snapped = SnapPosition(worldPosition);
         var key = PositionToKey(snapped);
 
+        // 이미 타일이 있으면 ID만 변경
         if (_tileLookup.TryGetValue(key, out var existing) && existing != null)
         {
             existing.TileId = tileId;
             return;
         }
 
+        // 새 타일 스폰 (Fusion Runner.Spawn으로 네트워크 동기화)
         Runner.Spawn(_tilePrefab, snapped, Quaternion.identity, null, (_, obj) =>
         {
             var tile = obj.GetComponent<WorldTile>();
@@ -152,6 +182,10 @@ public class WorldMapState : NetworkBehaviour
         });
     }
 
+    #endregion
+
+    #region Map Management
+
     private void SetMapName(string mapName)
     {
         var sanitized = SanitizeMapName(mapName);
@@ -162,12 +196,17 @@ public class WorldMapState : NetworkBehaviour
         HandleMapNameChanged();
     }
 
+    /// <summary>
+    /// 초기 맵 이름 결정. 우선순위: GameManager pending → 세션 프로퍼티 → 기본값
+    /// </summary>
     private string ResolveInitialMapName()
     {
+        // GameManager에서 대기 중인 맵 이름 (씬 전환으로 전달)
         var pending = GameManager.Instance != null ? GameManager.Instance.ConsumePendingMapName() : null;
         if (!string.IsNullOrWhiteSpace(pending))
             return pending;
 
+        // Fusion 세션 프로퍼티에서 맵 이름
         if (Runner != null && Runner.SessionInfo != null && Runner.SessionInfo.Properties != null &&
             Runner.SessionInfo.Properties.TryGetValue(SessionMapKey, out var mapProperty))
         {
@@ -229,6 +268,7 @@ public class WorldMapState : NetworkBehaviour
 
         _tileLookup.Clear();
 
+        // 혹시 누락된 타일이 있을 경우 정리
         var remainingTiles = FindObjectsByType<WorldTile>(FindObjectsSortMode.None);
         foreach (var tile in remainingTiles)
         {
@@ -242,6 +282,10 @@ public class WorldMapState : NetworkBehaviour
         }
     }
 
+    #endregion
+
+    #region Save/Load
+
     private void SaveCurrentMap()
     {
         var mapName = MapName.ToString();
@@ -251,6 +295,9 @@ public class WorldMapState : NetworkBehaviour
         SaveMapToDisk(mapName);
     }
 
+    /// <summary>
+    /// 맵을 JSON 파일로 저장. 경로: Application.persistentDataPath/Maps/{mapName}.json
+    /// </summary>
     private void SaveMapToDisk(string mapName)
     {
         var data = new WorldMapSaveData
@@ -338,6 +385,13 @@ public class WorldMapState : NetworkBehaviour
         }
     }
 
+    #endregion
+
+    #region Utility
+
+    /// <summary>
+    /// 월드 좌표를 타일 그리드에 스냅.
+    /// </summary>
     private Vector3 SnapPosition(Vector3 worldPosition)
     {
         if (_tileSize <= 0f)
@@ -382,6 +436,10 @@ public class WorldMapState : NetworkBehaviour
         return Path.Combine(directory, fileName);
     }
 
+    #endregion
+
+    #region Data Classes
+
     [Serializable]
     private class WorldMapSaveData
     {
@@ -395,4 +453,6 @@ public class WorldMapState : NetworkBehaviour
         public int TileId;
         public Vector3 Position;
     }
+
+    #endregion
 }

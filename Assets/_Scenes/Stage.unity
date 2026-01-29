@@ -195,7 +195,7 @@ Transform:
   m_GameObject: {fileID: 197248220}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.54576, y: 0, z: 1.60397}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -362,7 +362,6 @@ MonoBehaviour:
   _maxZoom: 50
   _zoomSmoothTime: 0.1
   _enableDragPan: 1
-  _dragButton: 2
   _dragSpeed: 0.5
   _useBounds: 0
   _boundsMin: {x: -100, y: -100}
@@ -615,7 +614,7 @@ Transform:
   m_GameObject: {fileID: 865706445}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.54576, y: 0, z: 1.60397}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -653,8 +652,6 @@ MonoBehaviour:
   _worldMapState: {fileID: 865706447}
   _mapRotation:
   - default
-  _nextMapKey: 280
-  _prevMapKey: 281
   _useLoadingSceneForMapSwitch: 1
   _loadingScenePath: Assets/_Scenes/Loading.unity
 --- !u!4 &2139337032
@@ -666,7 +663,7 @@ Transform:
   m_GameObject: {fileID: 2139337030}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.54576, y: 0, z: 1.60397}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

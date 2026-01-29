@@ -6,6 +6,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 
+/// <summary>
+/// Photon Fusion 2 네트워크 관리자. 로비 연결, 룸 생성/참가, 세션 목록 관리.
+/// </summary>
 public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
 {
     [SerializeField] private NetworkRunner _runnerPrefab;
@@ -19,8 +22,12 @@ public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
     public string PlayerNickname => _playerNickname;
     public IReadOnlyList<SessionInfo> LastSessionList => _lastSessionList;
 
+    // 세션 목록이 갱신될 때 발생 (로비에서 구독)
     public event Action<IReadOnlyList<SessionInfo>> SessionListUpdated;
 
+    /// <summary>
+    /// Photon 세션 로비에 연결. 연결 후 SessionListUpdated 이벤트로 룸 목록 수신.
+    /// </summary>
     public async Task<bool> JoinLobby(string nickname)
     {
         _playerNickname = nickname;
@@ -28,6 +35,7 @@ public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
         if (!EnsureRunner())
             return false;
 
+        // SessionLobby.ClientServer: 클라이언트-서버 모드의 세션 목록 조회
         var result = await _runner.JoinSessionLobby(SessionLobby.ClientServer);
 
         if (result.Ok)
@@ -42,11 +50,18 @@ public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
         }
     }
 
+    /// <summary>
+    /// 룸 참가 또는 생성 (간단 버전).
+    /// </summary>
     public Task<bool> JoinOrCreateRoom(string roomName, string sceneName)
     {
         return JoinOrCreateRoom(roomName, sceneName, null, null, null, null);
     }
 
+    /// <summary>
+    /// 룸 참가 또는 생성. Fusion Shared Mode로 동작하며, 룸이 없으면 자동 생성.
+    /// </summary>
+    /// <param name="sessionProperties">커스텀 세션 속성 (pw, host, map 등)</param>
     public async Task<bool> JoinOrCreateRoom(
         string roomName,
         string sceneName,
@@ -58,6 +73,7 @@ public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
         if (!EnsureRunner())
             return false;
 
+        // 씬 경로를 Fusion SceneRef로 변환
         var sceneInfo = new NetworkSceneInfo();
         var sceneIndex = SceneUtility.GetBuildIndexByScenePath(sceneName);
         if (sceneIndex >= 0)
@@ -69,6 +85,7 @@ public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
             Debug.LogWarning($"Scene not found in build settings: {sceneName}");
         }
 
+        // Shared Mode: 모든 클라이언트가 동등한 권한, StateAuthority로 오브젝트 소유권 관리
         var startGameArgs = new StartGameArgs
         {
             GameMode = GameMode.Shared,
@@ -97,6 +114,9 @@ public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
         }
     }
 
+    /// <summary>
+    /// NetworkRunner 인스턴스 생성 및 초기화. 없으면 프리팹에서 생성.
+    /// </summary>
     private bool EnsureRunner()
     {
         if (_runner != null)
@@ -110,11 +130,14 @@ public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
 
         _runner = Instantiate(_runnerPrefab);
         _runner.name = "NetworkRunner";
-        _runner.AddCallbacks(this);
+        _runner.AddCallbacks(this); // INetworkRunnerCallbacks 등록
         DontDestroyOnLoad(_runner.gameObject);
         return true;
     }
 
+    /// <summary>
+    /// 네트워크 연결 해제 및 상태 초기화.
+    /// </summary>
     public void Disconnect()
     {
         if (_runner != null)
@@ -138,6 +161,7 @@ public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
         Debug.LogError($"Connect failed: {reason}");
     }
 
+    // 클라이언트 연결 요청 시 호출 - 기본적으로 모두 수락
     public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token)
     {
         request.Accept();
@@ -200,6 +224,9 @@ public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
         Debug.Log("Scene load start");
     }
 
+    /// <summary>
+    /// 로비에서 세션 목록이 갱신될 때 호출. SessionListUpdated 이벤트 발생.
+    /// </summary>
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
     {
         var count = sessionList != null ? sessionList.Count : 0;
