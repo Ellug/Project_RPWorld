@@ -151,10 +151,12 @@ public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
 
     #region INetworkRunnerCallbacks
 
+#pragma warning disable UNT0006 // Incorrect message signature
     public void OnConnectedToServer(NetworkRunner runner)
     {
         Debug.Log("Connected to server");
     }
+#pragma warning restore UNT0006
 
     public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason)
     {
@@ -171,10 +173,12 @@ public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
     {
     }
 
+#pragma warning disable UNT0006
     public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
     {
         Debug.Log($"Disconnected from server: {reason}");
     }
+#pragma warning restore UNT0006
 
     public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken)
     {

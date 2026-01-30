@@ -10,6 +10,7 @@ public class StageManager : MonoBehaviour
     [Header("Map Switch")]
     [SerializeField] private WorldMapState _worldMapState;
     [SerializeField] private string[] _mapRotation = { "default" };
+    [SerializeField] private bool _allowClientsToRequestMapSwitch = false;
     [SerializeField] private bool _useLoadingSceneForMapSwitch = true;
     [SerializeField] private string _loadingScenePath = "Assets/_Scenes/Loading.unity";
 
@@ -20,14 +21,18 @@ public class StageManager : MonoBehaviour
     private void Awake()
     {
         AutoWireIfNeeded();
+
+        if (_mapRotation == null || _mapRotation.Length == 0)
+            _mapRotation = MapFileUtility.GetMapNamesFromDisk();
+
         if (_mapRotation != null && _mapRotation.Length > 0)
             _mapIndex = Mathf.Clamp(_mapIndex, 0, _mapRotation.Length - 1);
     }
 
     private void Update()
     {
-        // 호스트만 맵 전환 가능
-        if (!IsHost)
+        var canRequest = IsHost || _allowClientsToRequestMapSwitch;
+        if (!canRequest)
             return;
 
         if (_mapRotation == null || _mapRotation.Length == 0)
@@ -67,6 +72,12 @@ public class StageManager : MonoBehaviour
         var mapName = _mapRotation[_mapIndex];
         if (string.IsNullOrWhiteSpace(mapName))
             return;
+
+        if (!IsHost)
+        {
+            _worldMapState?.RequestChangeMap(mapName);
+            return;
+        }
 
         if (_useLoadingSceneForMapSwitch)
         {

@@ -23,6 +23,7 @@ public class FirestoreManager : Singleton<FirestoreManager>
     {
         try
         {
+            FirebaseFirestore.DefaultInstance.Settings.PersistenceEnabled = false;
             _db = FirebaseFirestore.DefaultInstance;
             _isInitialized = true;
             Debug.Log("Firestore initialized successfully");

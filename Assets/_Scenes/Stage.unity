@@ -597,10 +597,11 @@ MonoBehaviour:
   _tileSize: 1
   _tileHeight: 0
   _tilePrefab: {fileID: 6488689725298378048, guid: 061d6beb6316b1447ab0621618a796d2, type: 3}
+  _tilePrefabGuid: 061d6beb6316b1447ab0621618a796d2
   _tilePalette: {fileID: 11400000, guid: a67b94bb41a1fc643800bd7f58cc7777, type: 2}
   _autoSaveInterval: 60
   _saveOnApplicationQuit: 1
-  _logDebug: 0
+  _logDebug: 1
   _MapName:
     _length: 0
     _data:

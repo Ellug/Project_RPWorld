@@ -1644,7 +1644,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 5cee9f7153e223d4c8e8af0150227bc5, type: 3}
+  m_Sprite: {fileID: 21300000, guid: ffa89078e78066e4b986d3471e0ed681, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2458,7 +2458,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 5cee9f7153e223d4c8e8af0150227bc5, type: 3}
+  m_Sprite: {fileID: 21300000, guid: ffa89078e78066e4b986d3471e0ed681, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -3235,7 +3235,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 5cee9f7153e223d4c8e8af0150227bc5, type: 3}
+  m_Sprite: {fileID: 21300000, guid: ffa89078e78066e4b986d3471e0ed681, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -5504,6 +5504,7 @@ MonoBehaviour:
   _noticeDuration: 2
   _loadingScenePath: Assets/_Scenes/Loading.unity
   _titleSceneName: Title
+  _defaultMapName: default
 --- !u!4 &1403125941
 Transform:
   m_ObjectHideFlags: 0

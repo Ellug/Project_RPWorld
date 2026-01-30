@@ -72,7 +72,14 @@ public class TilePlacementController : MonoBehaviour
         }
 
         var hit = ray.GetPoint(enter);
-        var snapped = SnapPosition(hit);
+        var key = _worldMapState.PositionToKey(hit);
+        if (!_worldMapState.IsInsideBounds(key))
+        {
+            SetPreviewVisible(false);
+            return;
+        }
+
+        var snapped = _worldMapState.KeyToPosition(key);
         UpdatePreviewPosition(snapped);
 
         // 좌클릭: 타일 배치
@@ -197,17 +204,6 @@ public class TilePlacementController : MonoBehaviour
             return 0;
 
         return Mathf.Max(0, _tilePalette.Count - 1);
-    }
-
-    private Vector3 SnapPosition(Vector3 worldPosition)
-    {
-        var tileSize = GetTileSize();
-        if (tileSize <= 0f)
-            return new Vector3(worldPosition.x, GetTileHeight(), worldPosition.z);
-
-        var x = Mathf.Round(worldPosition.x / tileSize) * tileSize;
-        var z = Mathf.Round(worldPosition.z / tileSize) * tileSize;
-        return new Vector3(x, GetTileHeight(), z);
     }
 
     private void AutoWireIfNeeded()
