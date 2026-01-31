@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
+// Stage 인터랙션 모드 관리. 핫키: T(타일), B(건물), U(유닛), Tab(순환)
 public class StageInteractionModeManager : MonoBehaviour
 {
     [Header("Modes")]
@@ -29,6 +30,7 @@ public class StageInteractionModeManager : MonoBehaviour
 
     public StageInteractionMode CurrentMode { get; private set; }
 
+    // 모드 변경 시 발생
     public event Action<StageInteractionMode> ModeChanged;
 
     private Keyboard Keyboard => Keyboard.current;

@@ -1,20 +1,19 @@
 using Fusion;
 using UnityEngine;
 
+// 네트워크 동기화되는 개별 타일. WorldMapState에 자동 등록/해제
 public class WorldTile : NetworkBehaviour
 {
     [SerializeField] private TilePalette _palette;
     [SerializeField] private MeshRenderer _renderer;
+    [SerializeField] private WorldMapState _worldMapState;
 
-    [Networked]
-    public int TileId { get; set; }
-    [Networked]
-    public int KeyX { get; set; }
-    [Networked]
-    public int KeyY { get; set; }
+    // 네트워크 동기화 속성
+    [Networked] public int TileId { get; set; }
+    [Networked] public int KeyX { get; set; }
+    [Networked] public int KeyY { get; set; }
 
-    private NetworkBehaviour.ChangeDetector _changeDetector;
-    private WorldMapState _mapState;
+    private ChangeDetector _changeDetector;
     private Vector2Int _key;
     private bool _isRegistered;
 
@@ -84,28 +83,28 @@ public class WorldTile : NetworkBehaviour
         if (_isRegistered)
             return;
 
-        if (_mapState == null)
-            _mapState = FindFirstObjectByType<WorldMapState>();
+        if (_worldMapState == null)
+            _worldMapState = FindFirstObjectByType<WorldMapState>();
 
-        if (_mapState == null)
+        if (_worldMapState == null)
             return;
 
         _key = new Vector2Int(KeyX, KeyY);
         ApplyPositionFromKey();
-        _mapState.RegisterTile(_key, this);
+        _worldMapState.RegisterTile(_key, this);
         _isRegistered = true;
     }
 
     private void TryResolveMapState()
     {
-        if (_mapState == null)
-            _mapState = FindFirstObjectByType<WorldMapState>();
+        if (_worldMapState == null)
+            _worldMapState = FindFirstObjectByType<WorldMapState>();
 
-        if (_mapState == null)
+        if (_worldMapState == null)
             return;
 
         if (_palette == null)
-            _palette = _mapState.TilePalette;
+            _palette = _worldMapState.TilePalette;
 
         if (!_isRegistered)
             RegisterWithMapState();
@@ -117,35 +116,35 @@ public class WorldTile : NetworkBehaviour
         if (newKey == _key && _isRegistered)
             return;
 
-        if (_mapState == null)
-            _mapState = FindFirstObjectByType<WorldMapState>();
+        if (_worldMapState == null)
+            _worldMapState = FindFirstObjectByType<WorldMapState>();
 
-        if (_mapState == null)
+        if (_worldMapState == null)
             return;
 
         if (_isRegistered)
-            _mapState.UnregisterTile(_key, this);
+            _worldMapState.UnregisterTile(_key, this);
 
         _key = newKey;
         ApplyPositionFromKey();
-        _mapState.RegisterTile(_key, this);
+        _worldMapState.RegisterTile(_key, this);
         _isRegistered = true;
     }
 
     private void ApplyPositionFromKey()
     {
-        if (_mapState == null)
+        if (_worldMapState == null)
             return;
 
-        transform.position = _mapState.KeyToPosition(_key);
+        transform.position = _worldMapState.KeyToPosition(_key);
     }
 
     private void UnregisterFromMapState()
     {
-        if (!_isRegistered || _mapState == null)
+        if (!_isRegistered || _worldMapState == null)
             return;
 
-        _mapState.UnregisterTile(_key, this);
+        _worldMapState.UnregisterTile(_key, this);
         _isRegistered = false;
     }
 }

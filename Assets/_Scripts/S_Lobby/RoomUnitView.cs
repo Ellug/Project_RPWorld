@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+// 방 목록의 개별 항목 UI. 방 이름/인원/잠금 상태 표시
 public class RoomUnitView : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI _roomName;

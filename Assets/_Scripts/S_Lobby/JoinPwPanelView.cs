@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 
+// 비밀번호 방 입장 패널 UI. 비밀번호 입력 및 오류 표시
 public class JoinPwPanelView : MonoBehaviour
 {
     [SerializeField] private TMP_InputField _passwordInput;

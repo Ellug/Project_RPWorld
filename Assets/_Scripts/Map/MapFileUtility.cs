@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
+// 맵 파일 관련 유틸리티. 저장 경로: {persistentDataPath}/Maps/*.json
 public static class MapFileUtility
 {
+    // 디스크에 저장된 맵 이름 목록 반환 (알파벳순 정렬)
     public static string[] GetMapNamesFromDisk()
     {
         var directory = Path.Combine(Application.persistentDataPath, "Maps");

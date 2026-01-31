@@ -6,9 +6,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// 타이틀 씬 관리자. 로그인/회원가입 UI 및 Photon 로비 연결 처리.
-/// </summary>
+// 타이틀 씬 관리자. 로그인/회원가입 UI 및 Photon 로비 연결 처리.
 public class TitleManager : MonoBehaviour
 {
     [Header("Press Start")]
@@ -110,9 +108,7 @@ public class TitleManager : MonoBehaviour
         _signUpNicknameInput.onSubmit.AddListener(_ => OnSignUpClicked());
     }
 
-    /// <summary>
-    /// Tab 키로 다음/이전 입력 필드 이동 설정.
-    /// </summary>
+    // Tab 키로 다음/이전 입력 필드 이동 설정.
     private void SetupTabNavigation()
     {
         // Sign In Panel Navigation
@@ -139,9 +135,7 @@ public class TitleManager : MonoBehaviour
         selectable.navigation = nav;
     }
 
-    /// <summary>
-    /// Tab/Shift+Tab 키로 포커스 이동 처리.
-    /// </summary>
+    // Tab/Shift+Tab 키로 포커스 이동 처리.
     private void HandleTabNavigation()
     {
         if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
@@ -194,9 +188,7 @@ public class TitleManager : MonoBehaviour
         _signUpNicknameInput.text = "";
     }
 
-    /// <summary>
-    /// 로그인 버튼 클릭. Firebase 인증 → Firestore 유저 조회 → Photon 로비 연결 → Lobby 씬 이동.
-    /// </summary>
+    // 로그인 버튼 클릭. Firebase 인증 → Firestore 유저 조회 → Photon 로비 연결 → Lobby 씬 이동.
     private async void OnSignInClicked()
     {
         var email = _signInEmailInput.text.Trim();
@@ -261,9 +253,7 @@ public class TitleManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 회원가입 버튼 클릭. Firebase 계정 생성 → Firestore 문서 생성 → Photon 로비 연결.
-    /// </summary>
+    // 회원가입 버튼 클릭. Firebase 계정 생성 → Firestore 문서 생성 → Photon 로비 연결.
     private async void OnSignUpClicked()
     {
         var email = _signUpEmailInput.text.Trim();

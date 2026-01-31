@@ -4,9 +4,7 @@ using Firebase;
 using Firebase.Auth;
 using UnityEngine;
 
-/// <summary>
-/// Firebase 인증 관리자. 이메일/비밀번호 로그인 및 회원가입 처리.
-/// </summary>
+// Firebase 인증 관리자. 이메일/비밀번호 로그인 및 회원가입 처리.
 public class AuthManager : Singleton<AuthManager>
 {
     public string CurrentUserUid { get; private set; }
@@ -25,9 +23,7 @@ public class AuthManager : Singleton<AuthManager>
         InitializeFirebase();
     }
 
-    /// <summary>
-    /// Firebase 초기화 완료까지 대기. 로그인 전에 반드시 await.
-    /// </summary>
+    // Firebase 초기화 완료까지 대기. 로그인 전에 반드시 await.
     public Task WaitForInitialization() => _initializationTask.Task;
 
     private async void InitializeFirebase()
@@ -56,9 +52,7 @@ public class AuthManager : Singleton<AuthManager>
         }
     }
 
-    /// <summary>
-    /// 이메일/비밀번호로 로그인. 성공 시 FirebaseUser 반환.
-    /// </summary>
+    // 이메일/비밀번호로 로그인. 성공 시 FirebaseUser 반환.
     public async Task<FirebaseUser> SignInAsync(string email, string password)
     {
         if (!_isInitialized)
@@ -80,9 +74,7 @@ public class AuthManager : Singleton<AuthManager>
         }
     }
 
-    /// <summary>
-    /// 이메일/비밀번호로 회원가입. 성공 시 FirebaseUser 반환.
-    /// </summary>
+    // 이메일/비밀번호로 회원가입. 성공 시 FirebaseUser 반환.
     public async Task<FirebaseUser> SignUpAsync(string email, string password)
     {
         if (!_isInitialized)
@@ -104,9 +96,7 @@ public class AuthManager : Singleton<AuthManager>
         }
     }
 
-    /// <summary>
-    /// 로그인 성공 후 유저 정보 저장. Firestore에서 가져온 닉네임 포함.
-    /// </summary>
+    // 로그인 성공 후 유저 정보 저장. Firestore에서 가져온 닉네임 포함.
     public void SetUserData(string uid, string email, string nickname)
     {
         CurrentUserUid = uid;
@@ -121,13 +111,10 @@ public class AuthManager : Singleton<AuthManager>
         CurrentUserNickname = null;
     }
 
-    /// <summary>
-    /// 로그아웃 처리. Firebase 세션 종료 및 로컬 데이터 초기화.
-    /// </summary>
+    // 로그아웃 처리. Firebase 세션 종료 및 로컬 데이터 초기화.
     public void SignOut()
     {
-        if (_auth != null)
-            _auth.SignOut();
+        _auth?.SignOut();
 
         ClearUserData();
     }

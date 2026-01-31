@@ -4,9 +4,7 @@ using System.Threading.Tasks;
 using Firebase.Firestore;
 using UnityEngine;
 
-/// <summary>
-/// Firestore 데이터베이스 관리자. 유저 문서 생성 및 조회.
-/// </summary>
+// Firestore 데이터베이스 관리자. 유저 문서 생성 및 조회.
 public class FirestoreManager : Singleton<FirestoreManager>
 {
     private FirebaseFirestore _db;
@@ -34,9 +32,7 @@ public class FirestoreManager : Singleton<FirestoreManager>
         }
     }
 
-    /// <summary>
-    /// 신규 유저 문서 생성. 회원가입 시 호출. 경로: users/{uid}
-    /// </summary>
+    // 신규 유저 문서 생성. 회원가입 시 호출. 경로: users/{uid}
     public async Task CreateUserDocument(string uid, string email, string password, string nickname)
     {
         if (!_isInitialized)
@@ -64,9 +60,7 @@ public class FirestoreManager : Singleton<FirestoreManager>
         }
     }
 
-    /// <summary>
-    /// 유저 문서 조회. 로그인 후 닉네임 등 추가 정보 가져올 때 사용.
-    /// </summary>
+    // 유저 문서 조회. 로그인 후 닉네임 등 추가 정보 가져올 때 사용.
     public async Task<UserData> GetUserDocument(string uid)
     {
         if (!_isInitialized)
@@ -101,9 +95,7 @@ public class FirestoreManager : Singleton<FirestoreManager>
     }
 }
 
-/// <summary>
-/// Firestore에서 조회한 유저 데이터 DTO.
-/// </summary>
+// Firestore에서 조회한 유저 데이터 DTO.
 public class UserData
 {
     public string Uid { get; set; }

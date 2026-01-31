@@ -15,10 +15,16 @@ public class TilePlacementController : MonoBehaviour
     [SerializeField] private Key _prevTileKey = Key.Q;
     [SerializeField] private float _previewYOffset = 0.02f;
 
+    [Header("Quick Slot")]
+    [SerializeField] private TileQuickSlotController _quickSlotController;
+    [SerializeField] private bool _allowKeyboardCycleWithoutQuickSlots = true;
+
+    [Header("Camera")]
+    [SerializeField] private Camera _camera;
+
     private GameObject _preview;
     private MeshRenderer _previewRenderer;
-    private Camera _camera;
-    private int _selectedTileId;
+    private int _selectedTileId = -1;
 
     private Keyboard Keyboard => Keyboard.current;
     private Mouse Mouse => Mouse.current;
@@ -32,6 +38,10 @@ public class TilePlacementController : MonoBehaviour
     {
         SetupPreview();
         UpdatePreviewMaterial();
+
+        AutoWireQuickSlots();
+        if (_quickSlotController != null)
+            SetSelectedTileId(_quickSlotController.SelectedTileId);
     }
 
     private void OnEnable()
@@ -40,10 +50,17 @@ public class TilePlacementController : MonoBehaviour
             SetupPreview();
 
         UpdatePreviewMaterial();
+
+        AutoWireQuickSlots();
+        if (_quickSlotController != null)
+            _quickSlotController.SelectedTileChanged += HandleQuickSlotSelectionChanged;
     }
 
     private void OnDisable()
     {
+        if (_quickSlotController != null)
+            _quickSlotController.SelectedTileChanged -= HandleQuickSlotSelectionChanged;
+
         SetPreviewVisible(false);
     }
 
@@ -93,10 +110,13 @@ public class TilePlacementController : MonoBehaviour
         }
 
         var snapped = _worldMapState.KeyToPosition(key);
-        UpdatePreviewPosition(snapped);
+        if (_selectedTileId >= 0)
+            UpdatePreviewPosition(snapped);
+        else
+            SetPreviewVisible(false);
 
         // 좌클릭: 타일 배치
-        if (Mouse.leftButton.wasPressedThisFrame)
+        if (Mouse.leftButton.wasPressedThisFrame && _selectedTileId >= 0)
             _worldMapState.RequestPlaceTile(snapped, _selectedTileId);
 
         // 우클릭: 타일 삭제
@@ -106,6 +126,9 @@ public class TilePlacementController : MonoBehaviour
 
     private void HandleTileSelectionInput()
     {
+        if (_quickSlotController != null || !_allowKeyboardCycleWithoutQuickSlots)
+            return;
+
         var maxId = GetMaxTileId();
         if (maxId <= 0)
             return;
@@ -118,20 +141,6 @@ public class TilePlacementController : MonoBehaviour
             changed = true;
         }
         else if (Keyboard[_prevTileKey].wasPressedThisFrame)
-        {
-            _selectedTileId--;
-            if (_selectedTileId < 0)
-                _selectedTileId = maxId;
-            changed = true;
-        }
-
-        var scroll = Mouse.scroll.ReadValue().y;
-        if (scroll > 0f)
-        {
-            _selectedTileId = (_selectedTileId + 1) % (maxId + 1);
-            changed = true;
-        }
-        else if (scroll < 0f)
         {
             _selectedTileId--;
             if (_selectedTileId < 0)
@@ -184,6 +193,12 @@ public class TilePlacementController : MonoBehaviour
         if (_previewRenderer == null || _tilePalette == null)
             return;
 
+        if (_selectedTileId < 0)
+        {
+            SetPreviewVisible(false);
+            return;
+        }
+
         var material = _tilePalette.GetMaterial(_selectedTileId);
         if (material != null)
             _previewRenderer.sharedMaterial = material;
@@ -223,5 +238,31 @@ public class TilePlacementController : MonoBehaviour
     {
         if (_worldMapState == null)
             _worldMapState = FindFirstObjectByType<WorldMapState>();
+    }
+
+    private void AutoWireQuickSlots()
+    {
+        if (_quickSlotController == null)
+            _quickSlotController = FindFirstObjectByType<TileQuickSlotController>();
+    }
+
+    private void HandleQuickSlotSelectionChanged(int tileId)
+    {
+        SetSelectedTileId(tileId);
+    }
+
+    public void SetSelectedTileId(int tileId)
+    {
+        if (_selectedTileId == tileId)
+            return;
+
+        _selectedTileId = tileId;
+        if (_selectedTileId < 0)
+        {
+            SetPreviewVisible(false);
+            return;
+        }
+
+        UpdatePreviewMaterial();
     }
 }

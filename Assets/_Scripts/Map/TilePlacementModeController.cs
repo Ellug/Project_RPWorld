@@ -1,5 +1,6 @@
 using UnityEngine;
 
+// 타일 배치 모드 컨트롤러. 핫키: T
 public class TilePlacementModeController : StageModeController
 {
     [SerializeField] private TilePlacementController _tilePlacementController;
@@ -9,6 +10,8 @@ public class TilePlacementModeController : StageModeController
     private void Awake()
     {
         AutoWireIfNeeded();
+        if (_tilePlacementController != null)
+            _tilePlacementController.enabled = IsActive;
     }
 
     protected override void OnModeEnter()

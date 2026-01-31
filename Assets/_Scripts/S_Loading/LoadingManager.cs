@@ -4,9 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-/// <summary>
-/// 로딩 씬 관리자. 프로그레스 바 표시 및 Fusion 동기화 후 Stage 씬 전환.
-/// </summary>
+// 로딩 씬 관리자. 프로그레스 바 표시 및 Fusion 동기화 후 Stage 씬 전환.
 public class LoadingManager : MonoBehaviour
 {
     [Header("Scene")]
@@ -24,9 +22,7 @@ public class LoadingManager : MonoBehaviour
 
     public float Progress => _displayProgress;
 
-    /// <summary>
-    /// 프로그레스 변경 시 이벤트. 커스텀 UI 연동용.
-    /// </summary>
+    // 프로그레스 변경 시 이벤트. 커스텀 UI 연동용.
     public event Action<float> OnProgressChanged;
 
     private void Awake()
@@ -96,9 +92,7 @@ public class LoadingManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 부드러운 프로그레스 바 애니메이션 처리.
-    /// </summary>
+    // 부드러운 프로그레스 바 애니메이션 처리.
     private void UpdateDisplayProgress()
     {
         if (_smoothProgress)

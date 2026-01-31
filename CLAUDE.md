@@ -36,11 +36,13 @@ _Scripts/
 ├── System/       # Cross-scene singletons (Singleton, NetworkManager, GameManager)
 ├── Firebase/     # Firebase services (AuthManager, FirestoreManager)
 ├── Camera/       # Camera systems (RTSCameraController)
-├── Map/          # Map and tile system (WorldMapState, WorldTile, TilePalette, TilePlacementController)
+├── Map/          # Map/tile system (WorldMapState, WorldTile, TilePalette, TilePlacementController, TileQuickSlotController)
+├── Unit/         # Unit system (UnitSelectable, UnitMover, UnitSelectionManager, UnitControlModeController)
+├── Building/     # Building system (BuildingPlacementModeController, BuiltinPrimitiveMeshAssigner)
 ├── S_Title/      # Title scene only (TitleManager)
 ├── S_Lobby/      # Lobby scene only (LobbyManager, Views)
 ├── S_Loading/    # Loading scene only (LoadingManager)
-└── S_Stage/      # Stage scene (StageManager, interaction modes, unit system)
+└── S_Stage/      # Stage scene (StageManager, StageInteractionModeManager)
 ```
 
 ### Manager/View Pattern
@@ -141,11 +143,17 @@ The Stage scene uses a modal interaction system managed by `StageInteractionMode
 - **Modes**: `TilePlacement`, `BuildingPlacement`, `UnitControl`
 - Event: `ModeChanged` fires when switching modes
 
-Each mode has a `StageModeController` subclass:
+Each mode has a `StageModeController` subclass in its respective folder:
+- `TilePlacementModeController` in `_Scripts/Map/`
+- `BuildingPlacementModeController` in `_Scripts/Building/`
+- `UnitControlModeController` in `_Scripts/Unit/`
+
+Mode controller pattern:
 - Inherit from `StageModeController` abstract base
 - Override `Mode` property to declare which `StageInteractionMode` it handles
 - Override `OnModeEnter()` / `OnModeExit()` for activation/deactivation logic
 - Controllers enable/disable their managed components (e.g., `TilePlacementController`, `UnitSelectionManager`)
+- Use `AutoWireIfNeeded()` pattern to find components via `GetComponent` then `FindFirstObjectByType` fallback
 
 ### Tile System
 **TilePalette** (`Assets/_Scripts/Map/TilePalette.cs`):
@@ -164,20 +172,26 @@ Each mode has a `StageModeController` subclass:
 - Q/E 또는 마우스휠: 타일 종류 선택
 - 커서 위치에 프리뷰 표시
 
+**TileQuickSlotController** (`Assets/_Scripts/Map/TileQuickSlotController.cs`):
+- 1-0 키: 퀵슬롯 선택 (10개 슬롯)
+- I 키: 타일 리스트 패널 토글
+- 드래그 앤 드롭으로 타일을 퀵슬롯에 할당
+- `ITileDragSource` interface for drag operations between `TilePaletteItem` and `TileQuickSlotSlot`
+
 ### Unit System
-**UnitSelectable** (`Assets/_Scripts/S_Stage/UnitSelectable.cs`):
+**UnitSelectable** (`Assets/_Scripts/Unit/UnitSelectable.cs`):
 - Requires `Collider` component for raycast selection
 - Static `All` property exposes all active selectable units
 - `SetSelected(bool)` toggles selection state and visual tinting
 - Uses `MaterialPropertyBlock` for efficient color changes without material instancing
 
-**UnitMover** (`Assets/_Scripts/S_Stage/UnitMover.cs`):
+**UnitMover** (`Assets/_Scripts/Unit/UnitMover.cs`):
 - Requires `Rigidbody` component
 - `SetDestination(worldPosition)` - moves unit toward target
 - Physics-based movement with configurable speed, stopping distance, and turn speed
 - Automatically faces movement direction
 
-**UnitSelectionManager** (`Assets/_Scripts/S_Stage/UnitSelectionManager.cs`):
+**UnitSelectionManager** (`Assets/_Scripts/Unit/UnitSelectionManager.cs`):
 - Click selection (Shift+click to add to selection)
 - Drag-box multi-selection with visual rectangle
 - Right-click issues move orders to selected units

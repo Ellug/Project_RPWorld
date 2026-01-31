@@ -1,5 +1,6 @@
 using UnityEngine;
 
+// 건물 배치 모드 컨트롤러. 핫키: B
 public class BuildingPlacementModeController : StageModeController
 {
     [SerializeField] private bool _logDebug = false;

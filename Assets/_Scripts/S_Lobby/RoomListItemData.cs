@@ -1,5 +1,6 @@
 using Fusion;
 
+// 방 목록 항목 데이터. SessionInfo 래핑 + 호스트명/비밀번호 정보
 public sealed class RoomListItemData
 {
     public SessionInfo SessionInfo { get; }

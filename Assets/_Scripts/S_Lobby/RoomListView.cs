@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+// 방 목록 UI. RoomUnitView 프리팹으로 목록 렌더링
 public class RoomListView : MonoBehaviour
 {
     [SerializeField] private RectTransform _contentRoot;

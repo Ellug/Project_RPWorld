@@ -1,5 +1,6 @@
 using UnityEngine;
 
+// Unity 내장 프리미티브 메시(Cube, Capsule)를 자동 할당. 에디터/런타임 모두 동작
 [ExecuteAlways]
 public class BuiltinPrimitiveMeshAssigner : MonoBehaviour
 {
@@ -13,21 +14,13 @@ public class BuiltinPrimitiveMeshAssigner : MonoBehaviour
     [SerializeField] private Material _material;
     [SerializeField] private bool _applyMaterial = true;
 
-    private void Awake()
-    {
-        Apply();
-    }
+    private void Awake() => Apply();
 
-    private void Reset()
-    {
-        Apply();
-    }
+    private void Reset() => Apply();
 
-    private void OnValidate()
-    {
-        Apply();
-    }
+    private void OnValidate() => Apply();
 
+    // MeshFilter, MeshRenderer 자동 생성 및 메시/머티리얼 적용
     private void Apply()
     {
         var filter = GetComponent<MeshFilter>();

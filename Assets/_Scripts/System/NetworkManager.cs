@@ -6,9 +6,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 
-/// <summary>
-/// Photon Fusion 2 네트워크 관리자. 로비 연결, 룸 생성/참가, 세션 목록 관리.
-/// </summary>
+// Photon Fusion 2 네트워크 관리자. 로비 연결, 룸 생성/참가, 세션 목록 관리.
 public class NetworkManager : Singleton<NetworkManager>, INetworkRunnerCallbacks
 {
     [SerializeField] private NetworkRunner _runnerPrefab;

@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 
+// 방 생성 패널 UI. 방 이름/비밀번호 입력
 public class CreateRoomPanelView : MonoBehaviour
 {
     [SerializeField] private TMP_InputField _roomNameInput;

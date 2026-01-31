@@ -1,8 +1,6 @@
 using UnityEngine;
 
-/// <summary>
-/// 게임 전역 상태 관리자. 씬 간 맵 이름 전달 등 담당.
-/// </summary>
+// 게임 전역 상태 관리자. 씬 간 맵 이름 전달 등 담당.
 public class GameManager : Singleton<GameManager>
 {
     [Header("Map")]
