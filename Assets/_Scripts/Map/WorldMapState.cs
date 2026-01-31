@@ -297,6 +297,15 @@ public class WorldMapState : NetworkBehaviour
             return;
         }
 
+        if (TryFindExistingTile(key, out var fallback))
+        {
+            _tileLookup[key] = fallback;
+            _pendingSpawns.Remove(key);
+            fallback.TileId = tileId;
+            LogDebug($"Tile exists (fallback), updated TileId key={key} tileId={tileId}");
+            return;
+        }
+
         if (_pendingSpawns.Contains(key))
         {
             LogDebug($"Spawn pending, ignored key={key}");
@@ -745,6 +754,8 @@ public class WorldMapState : NetworkBehaviour
             if (_logDebug)
                 Debug.LogWarning($"[WorldMapState] Duplicate tile at {key}. Keeping existing.");
 
+            existing.TileId = tile.TileId;
+            DespawnOrDestroyTile(tile);
             return;
         }
 
@@ -776,6 +787,48 @@ public class WorldMapState : NetworkBehaviour
             _debugLogFrame = Time.frameCount;
 
         Debug.Log($"[WorldMapState] {message}");
+    }
+
+    private bool TryFindExistingTile(Vector2Int key, out WorldTile tile)
+    {
+        tile = null;
+
+        var tiles = FindObjectsByType<WorldTile>(FindObjectsSortMode.None);
+        if (tiles == null || tiles.Length == 0)
+            return false;
+
+        var targetPos = KeyToPosition(key);
+        foreach (var candidate in tiles)
+        {
+            if (candidate == null)
+                continue;
+
+            if (candidate.KeyX == key.x && candidate.KeyY == key.y)
+            {
+                tile = candidate;
+                return true;
+            }
+
+            var pos = candidate.transform.position;
+            if (Mathf.Abs(pos.x - targetPos.x) <= 0.01f && Mathf.Abs(pos.z - targetPos.z) <= 0.01f)
+            {
+                tile = candidate;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void DespawnOrDestroyTile(WorldTile tile)
+    {
+        if (tile == null)
+            return;
+
+        if (tile.Object != null && tile.HasStateAuthority && Runner != null)
+            Runner.Despawn(tile.Object);
+        else
+            Destroy(tile.gameObject);
     }
 
     private string SanitizeMapName(string mapName)

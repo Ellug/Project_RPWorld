@@ -34,6 +34,19 @@ public class TilePlacementController : MonoBehaviour
         UpdatePreviewMaterial();
     }
 
+    private void OnEnable()
+    {
+        if (_preview == null)
+            SetupPreview();
+
+        UpdatePreviewMaterial();
+    }
+
+    private void OnDisable()
+    {
+        SetPreviewVisible(false);
+    }
+
     private void Update()
     {
         if (_camera == null)

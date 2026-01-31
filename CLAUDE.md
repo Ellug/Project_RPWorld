@@ -40,7 +40,7 @@ _Scripts/
 ├── S_Title/      # Title scene only (TitleManager)
 ├── S_Lobby/      # Lobby scene only (LobbyManager, Views)
 ├── S_Loading/    # Loading scene only (LoadingManager)
-└── S_Stage/      # Stage scene only (StageManager)
+└── S_Stage/      # Stage scene (StageManager, interaction modes, unit system)
 ```
 
 ### Manager/View Pattern
@@ -96,6 +96,13 @@ Session properties used:
 - `host` - host player's nickname
 - `map` - current map name (used by WorldMapState)
 
+**Fusion Key Concepts**:
+- `GameMode.Shared` - all clients have equal authority, use `HasStateAuthority` to check ownership
+- `[Networked]` attribute - property synced across network, use `ChangeDetector` for change callbacks
+- `HasStateAuthority` - true if this client can modify networked state
+- `Runner.Spawn()` / `Runner.Despawn()` - spawn/despawn networked objects
+- `[Rpc(RpcSources.All, RpcTargets.StateAuthority)]` - client-to-host RPC pattern
+
 ### Lobby System
 **LobbyManager** (`Assets/_Scripts/S_Lobby/LobbyManager.cs`):
 - Manages room list display, room creation, and joining
@@ -128,6 +135,18 @@ Features:
 - 중클릭 드래그: 패닝
 - 화면 가장자리 스크롤 (옵션)
 
+### Stage Interaction Modes
+The Stage scene uses a modal interaction system managed by `StageInteractionModeManager`:
+- **Hotkeys**: T (Tile), B (Building), U (Unit), Tab (Cycle)
+- **Modes**: `TilePlacement`, `BuildingPlacement`, `UnitControl`
+- Event: `ModeChanged` fires when switching modes
+
+Each mode has a `StageModeController` subclass:
+- Inherit from `StageModeController` abstract base
+- Override `Mode` property to declare which `StageInteractionMode` it handles
+- Override `OnModeEnter()` / `OnModeExit()` for activation/deactivation logic
+- Controllers enable/disable their managed components (e.g., `TilePlacementController`, `UnitSelectionManager`)
+
 ### Tile System
 **TilePalette** (`Assets/_Scripts/Map/TilePalette.cs`):
 - ScriptableObject mapping tile IDs to Materials
@@ -135,14 +154,34 @@ Features:
 
 **WorldTile** (`Assets/_Scripts/Map/WorldTile.cs`):
 - `NetworkBehaviour` for individual tiles
-- Networked `TileId` with change detection for visual updates
-- Auto-wires palette from WorldMapState
+- Networked properties: `TileId`, `KeyX`, `KeyY`
+- Uses `ChangeDetector` in `Render()` to detect property changes and update visuals
+- Auto-registers with `WorldMapState` on spawn, unregisters on despawn
 
 **TilePlacementController** (`Assets/_Scripts/Map/TilePlacementController.cs`):
 - 좌클릭: 타일 배치
 - 우클릭: 타일 삭제
 - Q/E 또는 마우스휠: 타일 종류 선택
 - 커서 위치에 프리뷰 표시
+
+### Unit System
+**UnitSelectable** (`Assets/_Scripts/S_Stage/UnitSelectable.cs`):
+- Requires `Collider` component for raycast selection
+- Static `All` property exposes all active selectable units
+- `SetSelected(bool)` toggles selection state and visual tinting
+- Uses `MaterialPropertyBlock` for efficient color changes without material instancing
+
+**UnitMover** (`Assets/_Scripts/S_Stage/UnitMover.cs`):
+- Requires `Rigidbody` component
+- `SetDestination(worldPosition)` - moves unit toward target
+- Physics-based movement with configurable speed, stopping distance, and turn speed
+- Automatically faces movement direction
+
+**UnitSelectionManager** (`Assets/_Scripts/S_Stage/UnitSelectionManager.cs`):
+- Click selection (Shift+click to add to selection)
+- Drag-box multi-selection with visual rectangle
+- Right-click issues move orders to selected units
+- Grid formation for multi-unit movement
 
 ### Map System
 **GameManager** (`Assets/_Scripts/System/GameManager.cs`):
@@ -157,6 +196,15 @@ Features:
 - `RequestRemoveTile(worldPosition)` - RPC-based tile removal
 - `RequestChangeMap(mapName)` - RPC-based map switching
 - Auto-saves map to `Application.persistentDataPath/Maps/{mapName}.json`
+- Configurable map bounds (`_mapWidthTiles`, `_mapHeightTiles`) with `MapOriginMode` (Center/BottomLeft)
+- Events: `MapLoadStarted`, `MapLoadCompleted`, `PlacementOutOfBounds`
+
+**Tile Sync Flow**:
+1. Client calls `RequestPlaceTile()` → RPC to StateAuthority host
+2. Host calls `Runner.Spawn()` with `WorldTile` prefab
+3. Fusion syncs spawn to all clients
+4. Each client's `WorldTile.Spawned()` → `RegisterWithMapState()`
+5. `ChangeDetector` in `Render()` detects `TileId` changes → `ApplyMaterial()`
 
 **StageManager** (`Assets/_Scripts/S_Stage/StageManager.cs`):
 - Host-only map rotation via PageUp/PageDown keys
@@ -229,8 +277,13 @@ Maps are saved as JSON to `Application.persistentDataPath/Maps/{mapName}.json`:
 ```json
 {
   "MapName": "default",
+  "Version": 1,
   "Tiles": [
-    { "TileId": 0, "Position": { "x": 0, "y": 0, "z": 0 } }
+    { "TileId": 0, "X": 0, "Y": 0 }
   ]
 }
 ```
+Legacy format with `Position: {x, y, z}` is auto-converted on load.
+
+**MapFileUtility** (`Assets/_Scripts/Map/MapFileUtility.cs`):
+- `GetMapNamesFromDisk()` - returns sorted array of available map names
